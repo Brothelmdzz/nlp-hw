@@ -60,7 +60,24 @@ class PresidentGuesser:
     def __call__(self, question):
         # Update this code so that we can have a different president than Joe
         # Biden
-        candidates = ["Joseph R. Biden"]
+        candidates = []
+        theDate = time.strptime(question[21:], "%a %b %d %H:%M:%S %Y")
+        year = theDate.tm_year
+        month = theDate.tm_mon
+        day = theDate.tm_mday
+        hour = theDate.tm_hour
+        min = theDate.tm_min
+        sec = theDate.tm_sec
+        for row in training_data:
+            if year >= row["start"] and year <= row["stop"] :
+                candidates.append(row["name"])
+
+
+        if len(candidates) > 1:
+            if month == 1 and day < 20 or (day == 20 and hour < 12):
+                return {"guess": candidates[0]}  
+            else:
+                return {"guess": candidates[1]}   
 
 
         if len(candidates) == 0:
@@ -73,7 +90,8 @@ if __name__ == "__main__":
 
     pg.train(training_data)
     
-    for date in ["Who was president on Wed Jan 25 06:20:00 2023?",
-                     "Who was president on Sat May 23 02:00:00 1982?"]:
-        print(date, pg(date)["guess"])
+    for date in ["Who was president on Wed Jan 25 06:20:00 2023",
+                     "Who was president on Sat May 23 02:00:00 1982",
+                     "Who was president on Sun Mar 01 04:23:40 3001"]:
+        print(date, pg(date))
         
