@@ -46,7 +46,7 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(censored_b, censored_d)
 
         # Should add start and end tag
-        print(censored_a)
+
         self.assertEqual(len(censored_a), 3)
         self.assertEqual(censored_a[0], censored_b[2])
         self.assertEqual(censored_a[1], censored_b[0])

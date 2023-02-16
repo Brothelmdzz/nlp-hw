@@ -3,7 +3,7 @@ import json
 from collections import defaultdict
 from math import log
 import os
-from progress.bar import Bar
+
 
 from typing import Iterable, Tuple, Dict
 
@@ -39,6 +39,10 @@ class TfIdf:
         self._normalizer = normalize_function
 
         # Add your code here!
+        self._term_freq = {}
+        self._term_num = {}
+        self._doc_num = []
+        self._vocab[kUNK] = -1
 
     def train_seen(self, word: str, count: int=1):
         """Tells the language model that a word has been seen @count times.  This
@@ -57,15 +61,28 @@ class TfIdf:
 
         # Add your code here!
 
+        if word in self._vocab:
+            self._vocab[word] += count
+        else:
+            self._vocab[word] = count
+
+
     def add_document(self, text: str):
         """
         Tokenize a piece of text and add the entries to the class's counts.
 
         text -- The raw string containing a document
-        """
-
-        for word in self.tokenize(text):
-            None
+        """                
+        counts = FreqDist(self.tokenize(text))
+        num_words = len(text.split())
+        self._doc_num.insert(self._total_docs, num_words)
+        for word in self._term_freq:        
+            self._term_num[word].insert(self._total_docs, counts.freq(word)*num_words)
+            self._term_freq[word].insert(self._total_docs, counts.freq(word)) 
+        self._term_freq[-1][self._total_docs]+= 1-sum(counts.freq(word) for word in self._term_freq)
+        self._term_num[-1][self._total_docs]+= num_words-sum(counts.freq(word)*num_words for word in self._term_num)
+ 
+        self._total_docs += 1
 
     def tokenize(self, sent: str) -> Iterable[int]:
         """Return a generator over tokens in the sentence; return the vocab
@@ -100,7 +117,14 @@ class TfIdf:
         word -- The integer lookup of the word.
         """
 
-        return 0.0
+        freq = self._term_freq.get(word, 0.0)
+        a = 0
+        b = 0
+        for idx, x in enumerate(freq):
+            a += x * self._doc_num[idx]
+            b += self._doc_num[idx]
+
+        return a/b
 
     def inv_docfreq(self, word: int) -> float:
         """Compute the inverse document frequency of a word.  Return 0.0 if
@@ -110,8 +134,12 @@ class TfIdf:
         word -- The word to look up the document frequency of a word.
 
         """
-
-        return 0.0
+        x = self._term_freq.get(word, 0.0) 
+        count = sum(x > 0 for x in x)
+        if x == 0:
+            return count
+        else:
+            return log10(self._total_docs/count)
 
     def vocab_lookup(self, word: str) -> int:
         """
@@ -140,6 +168,18 @@ class TfIdf:
         # Add code to generate the vocabulary that the vocab lookup
         # function can use!
 
+        current_int = 1            
+        for word in self._vocab:
+            if self._vocab[word] < self._unk_cutoff:
+                self._vocab[word] = -1
+            else:
+                # code to generate unique integer for each word
+                current_int += 1
+                self._vocab[word] = current_int
+                self._term_freq[current_int] = []
+                self._term_num[current_int] = []
+        self._term_freq[-1] = []
+        self._term_num[-1] = []
         self._vocab_final = True
 
 
